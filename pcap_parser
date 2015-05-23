@@ -1,0 +1,44 @@
+#!/bin/bash
+
+if [ "$#" -ne 1 ]; then
+  echo ""
+  echo "Usage - ./pcap_parser [/path/to/pcaps/]"
+  echo "Example - ./pcap_parser /root/MITM_Toolkit/Pcap_dir/"
+  echo ""
+  echo "Author - Hutch (justinhutchens@gmail.com)"
+  echo ""
+  echo ""
+  echo "Thanks to Laurent Gaffie for writing PCredz, used in this script"
+  echo ""
+  exit
+fi
+
+## Initialize arguments passed into variables
+location=$1
+
+## Create Log Directory
+mkdir $location/parser_logs
+output_dir=$location/parser_logs/
+
+## Running PCredz
+echo "[+] Running PCredz Analysis..."
+./ParsingTools/Pcredz -d $location
+sleep 2
+mv ./ParsingTools/PCredz.log $output_dir
+
+## Running Ettercap
+echo "[+] Running Ettercap Analysis..."
+for x in $(ls $location/*.pcap); do ettercap -r $x -T | grep "SNMP : " | sort -u >> $output_dir/Etter_SNMP.txt; done
+for x in $(ls $location/*.pcap); do ettercap -r $x -T | grep "HTTP : " | sort -u >> $output_dir/Etter_HTTP.txt; done
+for x in $(ls $location/*.pcap); do ettercap -r $x -T | grep "FTP User: \|FTP Pass: " >> $output_dir/Etter_FTP.txt; done
+
+## Checking for Session Tokens
+echo "[+] Examining content for session tokens..."
+for x in $(ls $location/*.pcap); do echo "*** Checking $x for Session Tokens ***" >> $output_dir/Cookies.txt; echo "" >> $output_dir/Cookies.txt; if [[ -n $(ettercap -r $x -T | grep "Cookie:") ]]; then echo "[+] Cookie Headers identified..." >> $output_dir/Cookies.txt; fi; if [[ -n $(ettercap -r $x -T | grep "JSESSIONID=") ]]; then echo "[+] JSESSIONID tokens identified..." >> $output_dir/Cookies.txt; fi; if [[ -n $(ettercap -r $x -T | grep "PHPSESSID=") ]]; then echo "[+] PHPSESSID tokens identified..." >> $output_dir/Cookies.txt; fi; if [[ -n $(ettercap -r $x -T | grep "ASPSESSIONID=") ]]; then echo "[+] ASPSESSIONID tokens identified..." >> $output_dir/Cookies.txt; fi; echo "" >> $output_dir/Cookies.txt; echo "" >> $output_dir/Cookies.txt; done 
+
+## Wrapping up
+echo ""
+echo "[+] Analysis completed"
+echo ""
+echo "[+] Logs have been stored in $(echo $output_dir | sed 's/\///')"
+echo ""
