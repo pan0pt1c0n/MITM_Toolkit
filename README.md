@@ -2,7 +2,7 @@
 
 A toolkit for automating MITM attack management with ettercap.
 
-This is a collection of scripts to assist with MITM attacks. While this does constitute my best efforts to streamline these attacks, most of the thanks is still owed to Alberto Ornaghi, Marco Valleri, Emilio Escobar, and Eric Milam for the authorship and/or continued support of Ettercap, as well as Laurent Gaffie for PCredz. Without these tools, my scripts wouldn't get you very far.
+This is a collection of scripts to assist with MITM attacks. While this does constitute my best efforts to streamline these attacks, most of the thanks is still owed to Alberto Ornaghi, Marco Valleri, Emilio Escobar, and Eric Milam for the authorship and/or continued support of Ettercap, as well as Laurent Gaffie for PCredz, and Brendan Gregg for Chaosreader. Without these tools, my scripts wouldn't get you very far.
 
 ## Incremental Poison
 
