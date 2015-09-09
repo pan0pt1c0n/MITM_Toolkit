@@ -39,7 +39,7 @@ if [ "$#" -ne 3 ]; then
   echo "**                                                 **"
   echo "*****************************************************"
   echo ""
-  echo "Author - Hutch (Justin Hutchens)"
+  echo "Author - Hutch (Pan0pt1c0n)"
   echo ""
   exit
 fi
