@@ -5,7 +5,7 @@ if [ "$#" -ne 1 ]; then
   echo "Usage - ./pcap_parser [/path/to/pcaps/]"
   echo "Example - ./pcap_parser /root/MITM_Toolkit/Pcap_dir/"
   echo ""
-  echo "Author - Hutch (justinhutchens@gmail.com)"
+  echo "Author - Hutch (Pan0pt1c0n)"
   echo ""
   echo ""
   echo "Thanks to Laurent Gaffie for writing PCredz, used in this script"
